@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.movie import Movie
-from src.schemas.movie import MovieCreate
+from src.schemas.movie import MovieCreate, MovieUpdate
 
 async def create_movie(session: AsyncSession, data: MovieCreate) -> Movie:
     new_movie = Movie(**data.model_dump())
@@ -24,3 +24,26 @@ async def get_list_movies(
     query = select(Movie).order_by(Movie.id.asc()).offset(offset).limit(limit)
     result = await session.execute(query)
     return list(result.scalars().all())
+
+async def put_movie(session: AsyncSession, movie_id: int, movie_data: MovieCreate) -> Movie | None:
+    movie = await session.get(Movie, movie_id)
+    if not movie: return None
+    for field, value in movie_data.model_dump().items():
+        setattr(movie, field, value)
+    await session.commit()
+    return movie
+
+async def patch_movie(session: AsyncSession, movie_id: int, movie_data: MovieUpdate) -> Movie | None:
+    movie = await session.get(Movie, movie_id)
+    if not movie: return None
+    for field, value in movie_data.model_dump(exclude_unset=True).items():
+        setattr(movie, field, value)
+    await session.commit()
+    return movie
+
+async def delete_movie(session: AsyncSession, movie_id: int) -> bool:
+    movie = await session.get(Movie, movie_id)
+    if not movie: return False
+    await session.delete(movie)
+    await session.commit()
+    return True
