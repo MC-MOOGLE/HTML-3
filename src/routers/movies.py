@@ -9,11 +9,23 @@ router = APIRouter(prefix="/movies", tags=["movies"])
 
 @router.get("/", response_model=list[MovieRead])
 async def list_movies(
+    year_min: int | None = None,
+    year_max: int | None = None,
+    min_rating: float | None = None,
+    order_by: str | None = "-rating",
     limit: int = 50,
     offset: int = 0,
     session: AsyncSession = Depends(get_session)
     ):
-    return await repo.get_list_movies(session, limit=limit, offset=offset)
+    return await repo.get_list_movies(
+        session,
+        year_min=year_min,
+        year_max=year_max,
+        min_rating=min_rating,
+        order_by=order_by,
+        limit=limit,
+        offset=offset
+    )
 
 @router.get("/{movie_id}", response_model=MovieRead)
 async def get_movie(movie_id: int, session: AsyncSession = Depends(get_session)):
